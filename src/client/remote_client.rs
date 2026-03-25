@@ -1,4 +1,6 @@
-use crate::server::protocol::{DebugMessage, DebugRequest, DebugResponse};
+use crate::server::protocol::{
+    DebugMessage, DebugRequest, DebugResponse, PROTOCOL_MAX_VERSION, PROTOCOL_MIN_VERSION,
+};
 use crate::{DebuggerError, Result};
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
@@ -83,12 +85,42 @@ impl RemoteClient {
             config,
         };
 
+        client.handshake("rust-remote-client", env!("CARGO_PKG_VERSION"))?;
+
         // Authenticate if token is provided
         if let Some(token) = token {
             client.authenticate(&token)?;
         }
 
         Ok(client)
+    }
+
+    /// Perform a protocol handshake and verify compatibility.
+    pub fn handshake(&mut self, client_name: &str, client_version: &str) -> Result<u32> {
+        let response = self.send_request(DebugRequest::Handshake {
+            client_name: client_name.to_string(),
+            client_version: client_version.to_string(),
+            protocol_min: PROTOCOL_MIN_VERSION,
+            protocol_max: PROTOCOL_MAX_VERSION,
+        })?;
+
+        match response {
+            DebugResponse::HandshakeAck {
+                selected_version, ..
+            } => Ok(selected_version),
+            DebugResponse::IncompatibleProtocol { message, .. } => {
+                Err(DebuggerError::ExecutionError(format!(
+                    "Incompatible debugger protocol: {}",
+                    message
+                ))
+                .into())
+            }
+            DebugResponse::Error { message } => Err(DebuggerError::ExecutionError(message).into()),
+            _ => Err(
+                DebuggerError::ExecutionError("Unexpected response to Handshake".to_string())
+                    .into(),
+            ),
+        }
     }
 
     /// Authenticate with the server
@@ -298,9 +330,13 @@ impl RemoteClient {
     }
 
     /// Set a breakpoint
-    pub fn set_breakpoint(&mut self, function: &str) -> Result<()> {
+    pub fn set_breakpoint(&mut self, function: &str, _condition: Option<String>) -> Result<()> {
         let response = self.send_request(DebugRequest::SetBreakpoint {
+            id: function.to_string(),
             function: function.to_string(),
+            condition: None,
+            hit_condition: None,
+            log_message: None,
         })?;
 
         match response {
@@ -319,7 +355,7 @@ impl RemoteClient {
     /// Clear a breakpoint
     pub fn clear_breakpoint(&mut self, function: &str) -> Result<()> {
         let response = self.send_request(DebugRequest::ClearBreakpoint {
-            function: function.to_string(),
+            id: function.to_string(),
         })?;
 
         match response {
@@ -340,7 +376,10 @@ impl RemoteClient {
         let response = self.send_request(DebugRequest::ListBreakpoints)?;
 
         match response {
-            DebugResponse::BreakpointsList { breakpoints } => Ok(breakpoints),
+            DebugResponse::BreakpointsList { breakpoints } => Ok(breakpoints
+                .into_iter()
+                .map(|breakpoint| breakpoint.function)
+                .collect()),
             DebugResponse::Error { message } => Err(DebuggerError::ExecutionError(message).into()),
             _ => Err(DebuggerError::ExecutionError(
                 "Unexpected response to ListBreakpoints".to_string(),
@@ -485,7 +524,9 @@ impl RemoteClient {
         if !self.authenticated
             && !matches!(
                 request,
-                DebugRequest::Authenticate { .. } | DebugRequest::Ping
+                DebugRequest::Handshake { .. }
+                    | DebugRequest::Authenticate { .. }
+                    | DebugRequest::Ping
             )
         {
             return Err(SendFailure::NotAuthenticated);
@@ -633,7 +674,7 @@ fn backoff_delay(base: Duration, max: Duration, attempt: usize) -> Duration {
 }
 
 fn parse_response_line(expected_id: u64, response_line: &str) -> Result<DebugResponse> {
-    let response_message: DebugMessage = serde_json::from_str(response_line)
+    let response_message = DebugMessage::parse(response_line)
         .map_err(|e| DebuggerError::FileError(format!("Failed to parse response: {}", e)))?;
 
     if response_message.id != expected_id {
@@ -644,9 +685,26 @@ fn parse_response_line(expected_id: u64, response_line: &str) -> Result<DebugRes
         .into());
     }
 
-    response_message.response.ok_or_else(|| {
-        DebuggerError::FileError("Response message has no response field".to_string()).into()
-    })
+    let response = response_message.response.ok_or_else(|| {
+        DebuggerError::FileError("Response message has no response field".to_string())
+    })?;
+
+    if matches!(response, DebugResponse::Unknown) {
+        return Err(DebuggerError::ExecutionError(
+            "Received unknown response type from server. Try upgrading the client.".to_string(),
+        )
+        .into());
+    }
+
+    Ok(response)
+}
+
+fn sanitize_auth_message(message: &str, token: &str) -> String {
+    if token.is_empty() {
+        return message.to_string();
+    }
+
+    message.replace(token, "<redacted>")
 }
 
 impl Drop for RemoteClient {
