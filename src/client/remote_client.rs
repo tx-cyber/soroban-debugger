@@ -449,6 +449,28 @@ impl RemoteClient {
         Ok(())
     }
 
+    /// Cancel the current execution
+    pub fn cancel(&mut self) -> Result<()> {
+        let expected_id = self.message_id + 1;
+        
+        let response = match self.send_request(DebugRequest::Cancel) {
+            Ok(resp) => resp,
+            Err(e) if e.to_string().contains("No response") => {
+                // If the server immediately exited as part of cancelling, it drops the connection.
+                return Ok(());
+            }
+            Err(e) => return Err(e),
+        };
+
+        match response {
+            DebugResponse::CancelAck => {
+                info!("Server acknowledged cancellation");
+                Ok(())
+            }
+            _ => Err(DebuggerError::ExecutionError("Unexpected response to Cancel".to_string()).into()),
+        }
+    }
+
     /// Send a request and wait for response
     fn send_request(&mut self, request: DebugRequest) -> Result<DebugResponse> {
         self.send_request_with_retry(request, RequestClass::Default, false)
@@ -527,6 +549,7 @@ impl RemoteClient {
                 DebugRequest::Handshake { .. }
                     | DebugRequest::Authenticate { .. }
                     | DebugRequest::Ping
+                    | DebugRequest::Cancel
             )
         {
             return Err(SendFailure::NotAuthenticated);

@@ -385,7 +385,7 @@ impl SecurityRule for ReentrancyPatternRule {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct FrameKey {
     function: Option<String>,
-    call_depth: Option<usize>,
+    call_depth: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -1294,9 +1294,9 @@ mod tests {
                 sequence: i,
                 kind: DynamicTraceEventKind::StorageRead,
                 message: "contract_storage_get".to_string(),
+                call_depth: None,
                 caller: None,
                 function: Some("sweep".to_string()),
-                call_depth: Some(0),
                 storage_key: Some(format!("user:{}", i % 4)),
                 storage_value: None,
             });
@@ -1436,7 +1436,7 @@ mod tests {
                 message: "nested contract writes receipt".to_string(),
                 caller: Some("withdraw".to_string()),
                 function: Some("token.transfer".to_string()),
-                call_depth: Some(1),
+                call_depth: Some(0),
                 storage_key: Some("receipt:1".to_string()),
                 storage_value: Some("ok".to_string()),
             },
@@ -1503,9 +1503,9 @@ mod tests {
                 message: "write key1".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key1".to_string()),
                 storage_value: Some("value1".to_string()),
-                call_depth: Some(0),
             },
             DynamicTraceEvent {
                 sequence: 1,
@@ -1513,9 +1513,9 @@ mod tests {
                 message: "auth check".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: None,
                 storage_value: None,
-                call_depth: Some(0),
             },
         ];
 
@@ -1539,9 +1539,9 @@ mod tests {
                 message: "auth check".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: None,
                 storage_value: None,
-                call_depth: Some(0),
             },
             DynamicTraceEvent {
                 sequence: 1,
@@ -1549,9 +1549,9 @@ mod tests {
                 message: "write key1".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key1".to_string()),
                 storage_value: Some("value1".to_string()),
-                call_depth: Some(0),
             },
         ];
 
@@ -1571,9 +1571,9 @@ mod tests {
                 message: "write key1".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key1".to_string()),
                 storage_value: Some("value1".to_string()),
-                call_depth: Some(0),
             },
             DynamicTraceEvent {
                 sequence: 1,
@@ -1581,9 +1581,9 @@ mod tests {
                 message: "write key2".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key2".to_string()),
                 storage_value: Some("value2".to_string()),
-                call_depth: Some(0),
             },
             DynamicTraceEvent {
                 sequence: 2,
@@ -1591,9 +1591,9 @@ mod tests {
                 message: "auth check".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: None,
                 storage_value: None,
-                call_depth: Some(0),
             },
         ];
 
@@ -1617,9 +1617,9 @@ mod tests {
                 message: "write key1".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key1".to_string()),
                 storage_value: Some("value1".to_string()),
-                call_depth: Some(0),
             },
             DynamicTraceEvent {
                 sequence: 1,
@@ -1627,9 +1627,9 @@ mod tests {
                 message: "write key2".to_string(),
                 caller: None,
                 function: Some("test_function".to_string()),
+                call_depth: Some(0),
                 storage_key: Some("key2".to_string()),
                 storage_value: Some("value2".to_string()),
-                call_depth: Some(0),
             },
         ];
 
