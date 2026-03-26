@@ -1,12 +1,12 @@
-//! Soroban contract executor — public façade for the runtime sub-modules.
+﻿//! Soroban contract executor â€” public faÃ§ade for the runtime sub-modules.
 //!
 //! [`ContractExecutor`] is the main entry-point for all contract execution.
 //! Internally it delegates to four focused sub-modules:
 //!
-//! - [`super::loader`]  — WASM loading and environment bootstrap.
-//! - [`super::parser`]  — Argument parsing and type-aware normalisation.
-//! - [`super::invoker`] — Function invocation with timeout protection.
-//! - [`super::result`]  — Result types and formatting helpers.
+//! - [`super::loader`]  â€” WASM loading and environment bootstrap.
+//! - [`super::parser`]  â€” Argument parsing and type-aware normalisation.
+//! - [`super::invoker`] â€” Function invocation with timeout protection.
+//! - [`super::result`]  â€” Result types and formatting helpers.
 
 use crate::inspector::budget::MemorySummary;
 use crate::runtime::env::DebugEnv;
@@ -24,7 +24,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::{Arc, Mutex};
 use tracing::info;
 
-// ── re-exports so callers never need to import sub-modules directly ───────────
+// â”€â”€ re-exports so callers never need to import sub-modules directly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 pub use crate::runtime::mocking::MockCallLogEntry as MockCallEntry;
 pub use crate::runtime::result::{ExecutionRecord, InstructionCounts, StorageSnapshot};
 
@@ -179,7 +179,7 @@ impl ContractExecutor {
         }
     }
 
-    // ── accessors ─────────────────────────────────────────────────────────────
+    // â”€â”€ accessors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     pub fn last_execution(&self) -> Option<&ExecutionRecord> {
         self.last_execution.as_ref()
@@ -565,7 +565,7 @@ impl ContractExecutor {
         Ok(out)
     }
 
-    // ── private helpers ───────────────────────────────────────────────────────
+    // â”€â”€ private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     fn install_mock_dispatchers(&self) -> Result<()> {
         let ids = self
