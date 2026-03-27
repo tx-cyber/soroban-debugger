@@ -817,7 +817,7 @@ mod tests {
 
     #[test]
     fn ping_times_out_deterministically() {
-        if !TcpListener::bind("127.0.0.1:0").is_ok() {
+        if TcpListener::bind("127.0.0.1:0").is_err() {
             eprintln!("Skipping ping_times_out_deterministically: loopback restricted");
             return;
         }
@@ -898,7 +898,7 @@ mod tests {
 
     #[test]
     fn ping_retries_on_disconnect_and_succeeds() {
-        if !TcpListener::bind("127.0.0.1:0").is_ok() {
+        if TcpListener::bind("127.0.0.1:0").is_err() {
             eprintln!("Skipping ping_retries_on_disconnect_and_succeeds: loopback restricted");
             return;
         }

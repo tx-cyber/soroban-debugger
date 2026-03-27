@@ -543,7 +543,7 @@ impl DebugServer {
                                     )
                                 })
                                 .unwrap_or((None, 0));
-                            match {
+                            let exec_result = {
                                 is_executing.store(true, std::sync::atomic::Ordering::SeqCst);
                                 let r = engine.execute_without_breakpoints(
                                     &pending.function,
@@ -551,7 +551,8 @@ impl DebugServer {
                                 );
                                 is_executing.store(false, std::sync::atomic::Ordering::SeqCst);
                                 r
-                            } {
+                            };
+                            match exec_result {
                                 Ok(_) => DebugResponse::StepResult {
                                     paused: false,
                                     current_function,
@@ -615,7 +616,7 @@ impl DebugServer {
                 DebugRequest::Continue => match self.engine.as_mut() {
                     Some(engine) => {
                         if let Some(pending) = self.pending_execution.take() {
-                            match {
+                            let exec_result = {
                                 is_executing.store(true, std::sync::atomic::Ordering::SeqCst);
                                 let r = engine.execute_without_breakpoints(
                                     &pending.function,
@@ -623,7 +624,8 @@ impl DebugServer {
                                 );
                                 is_executing.store(false, std::sync::atomic::Ordering::SeqCst);
                                 r
-                            } {
+                            };
+                            match exec_result {
                                 Ok(output) => DebugResponse::ContinueResult {
                                     completed: true,
                                     output: Some(output),
@@ -1034,22 +1036,15 @@ async fn setup_signal_handlers(shutdown: Arc<Notify>) {
         use tokio::signal::unix::{signal, SignalKind};
         let mut sigterm = signal(SignalKind::terminate()).expect("Failed to setup SIGTERM handler");
 
-        loop {
-            tokio::select! {
-                _ = &mut ctrl_c => {
-                    info!("Received SIGINT, initiating shutdown");
-                    break;
-                }
-                _ = sigterm.recv() => {
-                    info!("Received SIGTERM, initiating shutdown");
-                    break;
-                }
+        tokio::select! {
+            _ = &mut ctrl_c => {
+                info!("Received SIGINT, initiating shutdown");
+            }
+            _ = sigterm.recv() => {
+                info!("Received SIGTERM, initiating shutdown");
             }
         }
     }
-
-    #[cfg(not(not(unix)))]
-    {} // This was part of a logic experiment, ignoring
 
     #[cfg(not(unix))]
     {

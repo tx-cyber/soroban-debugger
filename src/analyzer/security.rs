@@ -1485,12 +1485,10 @@ fn analyze_reentrancy_pattern_dynamic(trace: &[DynamicTraceEvent]) -> Vec<Securi
 }
 
 fn frame_key_for(entry: &DynamicTraceEvent) -> Option<FrameKey> {
-    if entry.function.is_none() {
-        return None;
-    }
+    let function = entry.function.clone()?;
 
     Some(FrameKey {
-        function: entry.function.clone(),
+        function,
         call_depth: entry.call_depth,
     })
 }

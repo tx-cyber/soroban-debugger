@@ -244,7 +244,7 @@ impl SourceMap {
                 }
             } else {
                 self.diagnostics.push(SourceMapDiagnostic {
-                    message: format!("DWARF unit is missing a line program (e.g., .debug_line section data missing or malformed)."),
+                    message: "DWARF unit is missing a line program (e.g., .debug_line section data missing or malformed).".to_string(),
                 });
             }
         }
