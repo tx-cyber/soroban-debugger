@@ -275,7 +275,12 @@ impl DebugServer {
                 }
             }
 
-            // Backward compatibility: allow Authenticate before handshake.
+            // BACKWARD COMPATIBILITY (intentional): Allow `Authenticate` to succeed before
+            // the protocol `Handshake` is completed. Older clients (pre-handshake protocol)
+            // send `Authenticate` as their first message. Removing or reordering this block
+            // would break those clients silently. Any change here MUST be accompanied by an
+            // update to the parity test `parity_dap_auth_before_handshake_is_accepted` in
+            // tests/parity_tests.rs and a version bump in src/server/protocol.rs.
             if let DebugRequest::Authenticate { token } = &request {
                 let success = self
                     .token
@@ -1029,7 +1034,7 @@ fn summarize_request(request: &DebugRequest) -> String {
 }
 
 async fn setup_signal_handlers(shutdown: Arc<Notify>) {
-    let mut ctrl_c = Box::pin(tokio::signal::ctrl_c());
+    let ctrl_c = Box::pin(tokio::signal::ctrl_c());
 
     #[cfg(unix)]
     {
