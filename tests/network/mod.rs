@@ -18,7 +18,8 @@ pub fn can_bind_loopback() -> bool {
             let reason = if e.kind() == ErrorKind::PermissionDenied {
                 "EPERM – loopback networking is not permitted in this environment \
                      (sandbox or container restriction). \
-                     See docs/remote-troubleshooting.md for remediation steps.".to_string()
+                     See docs/remote-troubleshooting.md for remediation steps."
+                    .to_string()
             } else {
                 format!("loopback networking restricted: {e}")
             };
