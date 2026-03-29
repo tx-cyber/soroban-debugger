@@ -50,7 +50,7 @@ impl DebugServer {
             (None, None) => None,
             _ => {
                 return Err(miette::miette!(
-                    "TLS not supported unless both certificate and key are provided"
+                    "TLS requires both certificate and key paths (--tls-cert and --tls-key)"
                 ));
             }
         };
@@ -1188,7 +1188,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_graceful_shutdown_on_signal() {
-        let server = DebugServer::new(None, None, None).expect("Failed to create server");
+        let server = DebugServer::new(None, None, None, None, Vec::new())
+            .expect("Failed to create server");
         let shutdown = server.shutdown.clone();
 
         let local = tokio::task::LocalSet::new();
@@ -1211,7 +1212,8 @@ mod tests {
 
     #[test]
     fn test_server_initialization() {
-        let server = DebugServer::new(None, None, None).expect("Failed to create server");
+        let server = DebugServer::new(None, None, None, None, Vec::new())
+            .expect("Failed to create server");
         assert!(server.engine.is_none());
         assert!(server.token.is_none());
         assert!(server.tls_config.is_none());
@@ -1221,7 +1223,26 @@ mod tests {
     fn test_server_with_token() {
         let token = "test-token-12345678".to_string();
         let server =
-            DebugServer::new(Some(token.clone()), None, None).expect("Failed to create server");
+            DebugServer::new(Some(token.clone()), None, None, None, Vec::new())
+                .expect("Failed to create server");
         assert_eq!(server.token, Some(token));
+    }
+
+    #[test]
+    fn test_server_rejects_partial_tls_configuration() {
+        let err = DebugServer::new(
+            None,
+            Some(Path::new("cert.pem")),
+            None,
+            None,
+            Vec::new(),
+        )
+        .expect_err("Expected partial TLS configuration to fail");
+
+        assert!(
+            err.to_string()
+                .contains("TLS requires both certificate and key paths"),
+            "unexpected error: {err}"
+        );
     }
 }

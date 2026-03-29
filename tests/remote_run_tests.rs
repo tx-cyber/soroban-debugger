@@ -7,6 +7,36 @@ use std::time::Duration;
 mod network;
 
 #[test]
+fn test_server_cli_rejects_tls_cert_without_key() {
+    let mut cmd: Command = assert_cmd::cargo::cargo_bin_cmd!("soroban-debug");
+    cmd.arg("server")
+        .arg("--port")
+        .arg("9230")
+        .arg("--tls-cert")
+        .arg("missing-cert.pem")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "TLS requires both certificate and key paths",
+        ));
+}
+
+#[test]
+fn test_server_cli_rejects_tls_key_without_cert() {
+    let mut cmd: Command = assert_cmd::cargo::cargo_bin_cmd!("soroban-debug");
+    cmd.arg("server")
+        .arg("--port")
+        .arg("9231")
+        .arg("--tls-key")
+        .arg("missing-key.pem")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "TLS requires both certificate and key paths",
+        ));
+}
+
+#[test]
 fn test_remote_run_execution() {
     if !network::can_bind_loopback() {
         eprintln!(
