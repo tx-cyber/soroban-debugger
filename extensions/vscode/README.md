@@ -141,6 +141,15 @@ Create a `snapshot.json` file with the initial state for your debugger session. 
   - Default: `[]`
   - Example: `["arg1", "arg2"]`
 
+- **token** (string): Optional single-line authentication token for the remote debugger server.
+  - Tip: When using `request: "launch"`, this token is passed to the spawned server and used for subsequent authentication.
+
+- **tlsCert** (string): Optional path to a TLS certificate file for secure connections.
+  - Required if `tlsKey` is provided.
+
+- **tlsKey** (string): Optional path to a TLS private key file for secure connections.
+  - Required if `tlsCert` is provided.
+
 - **trace** (boolean): Enable detailed trace logging for debugging the adapter itself
   - Default: `false`
 
