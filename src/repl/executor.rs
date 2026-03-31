@@ -104,8 +104,7 @@ impl ReplExecutor {
             crate::logging::LogLevel::Info,
         );
 
-        let watch_refs: Vec<&str> = self.watch_keys.iter().map(|s| s.as_str()).collect();
-        let diff = StorageInspector::compute_diff(&storage_before, &storage_after, &watch_refs);
+        let diff = StorageInspector::compute_diff(&storage_before, &storage_after, &self.watch_keys);
         if diff.is_empty() {
             crate::logging::log_display("Storage: (no changes)", crate::logging::LogLevel::Info);
         } else {

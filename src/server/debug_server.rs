@@ -192,7 +192,6 @@ impl DebugServer {
                 .map_err(|_| miette::miette!("Connection closed"))
         };
 
-        let mut heartbeat_interval = None;
         let mut idle_timeout = None;
         let mut _heartbeat_timer = None;
 
@@ -272,10 +271,9 @@ impl DebugServer {
                     Ok(selected_version) => {
                         handshake_done = true;
                         // Support heartbeat/timeout negotiation
-                        heartbeat_interval = *heartbeat_interval_ms;
                         idle_timeout = *idle_timeout_ms;
 
-                        if let Some(interval) = heartbeat_interval {
+                        if let Some(interval) = *heartbeat_interval_ms {
                             info!("Negotiated heartbeat interval: {}ms", interval);
                             let tx_heartbeat = tx_out.clone();
                             let interval_ms = interval as u64;
@@ -308,7 +306,7 @@ impl DebugServer {
                                 protocol_min: PROTOCOL_MIN_VERSION,
                                 protocol_max: PROTOCOL_MAX_VERSION,
                                 selected_version: selected_version,
-                                heartbeat_interval_ms: heartbeat_interval,
+                                heartbeat_interval_ms: *heartbeat_interval_ms,
                                 idle_timeout_ms: idle_timeout,
                             },
                         );

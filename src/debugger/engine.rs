@@ -412,7 +412,7 @@ impl DebuggerEngine {
                     match first_topic {
                         soroban_env_host::xdr::ScVal::Symbol(sym) => {
                             // Convert the symbol bytes to a string
-                            String::from_utf8(sym.0.clone()).ok()
+                            String::from_utf8(sym.0.to_vec()).ok()
                         }
                         _ => {
                             // For non-symbol topics, fall back to debug format
@@ -449,6 +449,21 @@ impl DebuggerEngine {
 
         let stepped = if let Ok(mut state) = self.state.lock() {
             self.stepper.step_over(&mut state)
+        } else {
+            false
+        };
+        self.paused = stepped;
+        Ok(stepped)
+    }
+
+    /// Step to the next basic block boundary.
+    pub fn step_block(&mut self) -> Result<bool> {
+        if !self.instruction_debug_enabled {
+            return Err(miette::miette!("Instruction debugging not enabled"));
+        }
+
+        let stepped = if let Ok(mut state) = self.state.lock() {
+            self.stepper.step_block(&mut state)
         } else {
             false
         };
