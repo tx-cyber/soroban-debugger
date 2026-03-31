@@ -143,27 +143,6 @@ fn panic_payload_to_string(payload: Box<dyn Any + Send>) -> String {
     }
 }
 
-fn execute_with_panic_guard(
-    executor: &mut ContractExecutor,
-    function: &str,
-    args_json: &str,
-    trace: &mut Vec<crate::server::protocol::DynamicTraceEvent>,
-) -> Result<String> {
-    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        executor.execute(function, Some(args_json))
-    })) {
-        Ok(res) => {
-            *trace = executor.get_dynamic_trace().unwrap_or_default();
-            res
-        }
-        Err(payload) => Err(DebuggerError::ExecutionError(format!(
-            "Contract execution panicked: {}",
-            panic_payload_to_string(payload)
-        ))
-        .into()),
-    }
-}
-
 #[derive(Default)]
 pub struct SymbolicAnalyzer;
 
@@ -265,31 +244,35 @@ impl SymbolicAnalyzer {
             }
 
             let mut trace = Vec::new();
-            let executor_res = {
-                if let Ok(mut executor) = ContractExecutor::new(wasm.to_vec()) {
-                    executor.set_timeout(config.timeout_secs);
-                    // Apply storage seed if provided
-                    if let Some(ref storage) = config.storage_seed {
-                        if let Err(e) = executor.set_initial_storage(storage.clone()) {
-                            Err(crate::DebuggerError::StorageError(format!(
-                                "Failed to set initial storage: {}",
-                                e
-                            ))
-                            .into())
-                        } else {
-                            execute_with_panic_guard(
-                                &mut executor,
-                                function,
-                                args_json,
-                                &mut trace,
-                            )
-                        }
-                    } else {
-                        execute_with_panic_guard(&mut executor, function, args_json, &mut trace)
-                    }
-                } else {
-                    Err(crate::DebuggerError::ExecutionError("Init fail".into()).into())
+            let guarded_run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let mut executor = ContractExecutor::new(wasm.to_vec())
+                    .map_err(|_| crate::DebuggerError::ExecutionError("Init fail".into()))?;
+                executor.set_timeout(config.timeout_secs);
+
+                if let Some(ref storage) = config.storage_seed {
+                    executor.set_initial_storage(storage.clone()).map_err(|e| {
+                        crate::DebuggerError::StorageError(format!(
+                            "Failed to set initial storage: {}",
+                            e
+                        ))
+                    })?;
                 }
+
+                let res = executor.execute(function, Some(args_json));
+                let trace = executor.get_dynamic_trace().unwrap_or_default();
+                Ok::<_, crate::DebuggerError>((res, trace))
+            }));
+            let executor_res = match guarded_run {
+                Ok(Ok((res, captured_trace))) => {
+                    trace = captured_trace;
+                    res
+                }
+                Ok(Err(err)) => Err(err.into()),
+                Err(payload) => Err(DebuggerError::ExecutionError(format!(
+                    "Contract execution panicked: {}",
+                    panic_payload_to_string(payload)
+                ))
+                .into()),
             };
 
             match executor_res {
