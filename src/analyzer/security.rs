@@ -209,7 +209,7 @@ impl SecurityAnalyzer {
                     && supp
                         .location
                         .as_ref()
-                        .map_or(true, |loc| finding.location.contains(loc))
+                        .is_none_or(|loc| finding.location.contains(loc))
                 {
                     finding.suppressed = true;
                     suppressed_count += 1;
