@@ -103,7 +103,7 @@ mod tests {
         let analyzer = SecurityAnalyzer::new();
         let filter = AnalyzerFilter::default();
         let report = analyzer
-            .analyze(&wasm, None, None, &filter)
+            .analyze(&wasm, None, None, &filter, "test_loop.wasm")
             .expect("Analysis should succeed");
 
         // Should find the unbounded iteration issue
