@@ -411,27 +411,6 @@ impl OutputConfig {
     }
 }
 
-/// Render a resource timeline table for profiler reports.
-pub fn format_resource_timeline(timeline: &[ResourceCheckpoint]) -> String {
-    if timeline.is_empty() {
-        return String::new();
-    }
-
-    let mut out = String::new();
-    let header = "| Time (ms) | CPU | Memory | Location |";
-    let divider = "|---|---|---|---|";
-    out.push_str(&format!("{}\n{}\n", header, divider));
-
-    for checkpoint in timeline {
-        let cpu = BudgetInspector::format_cpu_insns(checkpoint.cpu_instructions);
-        let mem = BudgetInspector::format_memory_bytes(checkpoint.memory_bytes);
-        out.push_str(&format!(
-            "| {} | {} | {} | {} |\n",
-            checkpoint.timestamp_ms, cpu, mem, checkpoint.location_name
-        ));
-    }
-
-    OutputConfig::to_ascii(&out)
 pub fn format_resource_timeline(timeline: &[crate::inspector::budget::ResourceCheckpoint]) -> String {
     let mut out = String::new();
     use std::fmt::Write;
