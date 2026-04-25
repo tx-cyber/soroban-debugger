@@ -14,6 +14,24 @@ pub struct PluginRuntimeDescriptor {
     pub trusted: bool,
 }
 
+/// Policy governing what capabilities a plugin is allowed to register or use
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PluginSandboxPolicy {
+    pub allow_command_registration: bool,
+    pub allow_formatter_registration: bool,
+    pub allow_execution_hooks: bool,
+}
+
+impl Default for PluginSandboxPolicy {
+    fn default() -> Self {
+        Self {
+            allow_command_registration: true,
+            allow_formatter_registration: true,
+            allow_execution_hooks: true,
+        }
+    }
+}
+
 /// A loaded plugin instance
 pub struct LoadedPlugin {
     /// The plugin instance
@@ -92,6 +110,9 @@ pub struct PluginLoader {
 
     /// Trust policy used before dynamic loading
     trust_policy: PluginTrustPolicy,
+
+    /// Sandbox policy used for capability containment
+    sandbox_policy: PluginSandboxPolicy,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -154,6 +175,19 @@ impl PluginLoader {
         Self {
             plugin_dir,
             trust_policy,
+            sandbox_policy: PluginSandboxPolicy::default(),
+        }
+    }
+
+    pub fn with_policies(
+        plugin_dir: PathBuf,
+        trust_policy: PluginTrustPolicy,
+        sandbox_policy: PluginSandboxPolicy,
+    ) -> Self {
+        Self {
+            plugin_dir,
+            trust_policy,
+            sandbox_policy,
         }
     }
 

@@ -232,6 +232,14 @@ pub enum Commands {
     #[command(subcommand_help_heading = "Developer Utilities")]
     HistoryPrune(HistoryPruneArgs),
 
+    /// Generate a trust and security report for all loaded plugins
+    #[command(subcommand_help_heading = "Developer Utilities")]
+    PluginTrustReport(PluginTrustReportArgs),
+
+    /// Inspect a specific plugin's capabilities and metadata
+    #[command(subcommand_help_heading = "Developer Utilities")]
+    PluginInspect(PluginInspectArgs),
+
     /// Report runtime health and diagnostics for troubleshooting
     Doctor(DoctorArgs),
 
@@ -1432,4 +1440,21 @@ pub struct DoctorArgs {
     /// Optional path to a VS Code extension `package.json` to report version hints
     #[arg(long, value_name = "FILE")]
     pub vscode_manifest: Option<PathBuf>,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct PluginTrustReportArgs {
+    /// Output format (pretty, json)
+    #[arg(long, value_enum, default_value = "pretty")]
+    pub format: OutputFormat,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct PluginInspectArgs {
+    /// Name of the plugin to inspect
+    pub name: String,
+
+    /// Output format (pretty, json)
+    #[arg(long, value_enum, default_value = "pretty")]
+    pub format: OutputFormat,
 }

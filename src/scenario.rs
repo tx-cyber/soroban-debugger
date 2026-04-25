@@ -152,7 +152,7 @@ pub fn run_scenario(args: ScenarioArgs, _verbosity: Verbosity) -> Result<()> {
         Formatter::success(format!("Running {} scenario steps...\n", steps.len()))
     );
 
-    let mut engine = DebuggerEngine::new(executor, vec![]);
+    let mut engine = DebuggerEngine::new(executor, vec![], vec![]);
     let mut all_passed = true;
     let mut variables: HashMap<String, String> = HashMap::new();
 
