@@ -119,6 +119,10 @@ pub struct RemoteClient {
     /// Session identifier received from the server during the initial handshake.
     /// Used to reconnect to an existing session after a transient disconnect.
     session_id: Option<String>,
+    /// The protocol version selected during the handshake.
+    selected_protocol_version: Option<u32>,
+    /// Metadata about the current session received from the server.
+    session_info: Option<crate::server::protocol::RemoteSessionInfo>,
 }
 
 #[derive(Debug)]
@@ -190,6 +194,8 @@ impl RemoteClient {
             authenticated: token.is_none(),
             config,
             session_id: None,
+            selected_protocol_version: None,
+            session_info: None,
         };
 
         client.handshake("rust-remote-client", env!("CARGO_PKG_VERSION"))?;
@@ -355,6 +361,7 @@ impl RemoteClient {
             heartbeat_interval_ms: self.config.heartbeat_interval_ms,
             idle_timeout_ms: self.config.idle_timeout_ms,
             session_label: self.config.session_label.clone(),
+            reconnect_session_id: None,
         })?;
 
         match response {
@@ -783,6 +790,7 @@ impl RemoteClient {
             heartbeat_interval_ms: Some(30000),
             idle_timeout_ms: Some(60000),
             session_label: self.config.session_label.clone(),
+            reconnect_session_id: self.session_id.clone(),
         };
         // Use a standard timeout for handshake during reconnect
         let handshake_resp = self
@@ -793,9 +801,7 @@ impl RemoteClient {
 
         // Capture session_id from reconnect handshake
         if let DebugResponse::HandshakeAck { session_id, .. } = &handshake_resp {
-            if session_id.is_some() {
-                self.session_id = session_id.clone();
-            }
+            self.session_id = Some(session_id.clone());
         }
 
         if let Some(token) = self.token.clone() {

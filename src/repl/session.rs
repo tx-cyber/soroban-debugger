@@ -118,9 +118,9 @@ impl ReplSession {
     /// Create a new REPL session
     pub fn new(config: ReplConfig) -> Result<Self> {
         let global_config = crate::config::Config::load_or_default();
-        let save_history = global_config.repl.save_history.unwrap_or(true);
+        let save_history = global_config.repl_settings.save_history.unwrap_or(true);
         
-        let history_path = if let Some(path) = global_config.repl.history_file {
+        let history_path = if let Some(path) = global_config.repl_settings.history_file {
             PathBuf::from(path)
         } else {
             let history_base_dir = dirs::home_dir().unwrap_or_else(|| {

@@ -1,5 +1,5 @@
 use crate::debugger::breakpoint::{BreakpointManager, BreakpointSpec};
-use crate::debugger::breakpoint::{BreakpointManager, ConditionEvaluator};
+use crate::debugger::breakpoint::ConditionEvaluator;
 use crate::debugger::instruction_pointer::StepMode;
 use crate::debugger::source_map::{SourceLocation, SourceMap};
 use crate::debugger::state::{DebugState, PauseReason};
@@ -293,7 +293,7 @@ impl DebuggerEngine {
 
         if check_breakpoints {
             let evaluator = self.create_condition_evaluator();
-            match self.breakpoints.should_break_with_context(function, &evaluator) {
+            match self.breakpoints.should_break_with_context(function, evaluator.as_ref()) {
                 Ok((should_pause, log_message)) => {
                     if let Some(msg) = log_message {
                         // Log point hit - output message but don't pause
@@ -311,6 +311,7 @@ impl DebuggerEngine {
                 Err(e) => {
                     tracing::warn!("Breakpoint evaluation failed: {}", e);
                 }
+            }
             let storage = self.executor.get_storage_snapshot().unwrap_or_default();
             let evaluator = EngineConditionEvaluator::new(storage);
             let (should_pause, log_output) = self

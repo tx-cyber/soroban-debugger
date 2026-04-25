@@ -172,6 +172,8 @@ pub enum DebugRequest {
         idle_timeout_ms: Option<u32>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         session_label: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reconnect_session_id: Option<String>,
     },
 
     /// Authenticate with the server
@@ -298,7 +300,7 @@ pub enum DebugResponse {
         /// Opaque session identifier the client can use to reconnect after a
         /// transient disconnect. Absent on servers that do not support reconnection.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        session_id: Option<String>,
+        reconnect_id: Option<String>,
     },
 
     /// Handshake failed due to protocol mismatch.
@@ -355,6 +357,20 @@ pub enum DebugResponse {
         source_location: Option<SourceLocation>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pause_reason: Option<String>,
+    },
+
+    /// Acknowledgment of a successful session reconnection.
+    ReconnectAck {
+        session_id: String,
+        paused: bool,
+        current_function: Option<String>,
+        breakpoints: Vec<String>,
+        step_count: u64,
+    },
+
+    /// Reconnection failed because the session has expired or been purged.
+    SessionExpired {
+        message: String,
     },
 
     /// Inspection result

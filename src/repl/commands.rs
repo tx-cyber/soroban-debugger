@@ -34,6 +34,7 @@ pub enum ReplCommand {
         function: String,
     },
     Functions,
+    Palette,
 }
 
 impl ReplCommand {
@@ -51,6 +52,7 @@ impl ReplCommand {
             "list-breaks",
             "clear-break",
             "functions",
+            "palette",
         ]
     }
 
@@ -114,6 +116,7 @@ impl ReplCommand {
             "functions" => Ok(ReplCommand::Functions),
             "clear" => Ok(ReplCommand::Clear),
             "help" => Ok(ReplCommand::Help),
+            "palette" => Ok(ReplCommand::Palette),
             "exit" | "quit" => Ok(ReplCommand::Exit),
             _ => Err(miette::miette!(
                 "Unknown command: '{}'. Type 'help' for available commands.",
